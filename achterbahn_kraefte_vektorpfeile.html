@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Achterbahn: Wie setzen sich die Kräfte zusammen?</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --amber-text: #92400e;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --green-text: #166534;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --red-text: #991b1b;
+    --blue-bg: #eff6ff;
+    --blue-border: #bfdbfe;
+    --blue-text: #1e40af;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 24px 36px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .header {
+    max-width: 1280px;
+    margin: 0 auto 18px;
+  }
+
+  .header h1 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .grid {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 980px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .canvas-wrap {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #475569;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .line-solid {
+    width: 18px;
+    height: 3px;
+    background: #1e293b;
+    border-radius: 2px;
+  }
+
+  .line-dashed-red {
+    width: 18px;
+    height: 0;
+    border-top: 3px dashed var(--red);
+  }
+
+  .line-dashed-green {
+    width: 18px;
+    height: 0;
+    border-top: 3px dashed var(--green);
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pos-btn {
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .pos-btn:hover {
+    background: #f1f5f9;
+  }
+
+  .pos-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .rail-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .rail-toggle input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--green);
+    cursor: pointer;
+  }
+
+  .preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .preset-btn {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .preset-btn:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+  }
+
+  .sliders {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .sliders {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .slider-item label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .slider-item label span.val {
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+
+  .footnote {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Right panel */
+  .frame-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .frame-btn {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .frame-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+
+  .formula-box {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 11px 12px 9px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  /* Crisp vector arrow directly above F */
+  .vec {
+    position: relative;
+    display: inline-block;
+    font-style: normal;
+  }
+
+  .vec::before {
+    content: "→";
+    position: absolute;
+    top: -0.62em;
+    left: 50%;
+    transform: translateX(-46%);
+    font-size: 0.72em;
+    line-height: 1;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .metric-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .metric-label.blue { color: var(--blue); }
+  .metric-label.green { color: var(--green); }
+  .metric-label.red { color: var(--red); }
+  .metric-label.purple { color: var(--purple); }
+  .metric-label.slate { color: #334155; }
+
+  .metric-value {
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-box {
+    margin-top: 12px;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    border: 1px solid var(--green-border);
+    background: var(--green-bg);
+    color: var(--green-text);
+  }
+
+  .status-box.amber {
+    border-color: var(--amber-border);
+    background: var(--amber-bg);
+    color: var(--amber-text);
+  }
+
+  .status-box.red {
+    border-color: var(--red-border);
+    background: var(--red-bg);
+    color: var(--red-text);
+  }
+
+  .status-box.blue {
+    border-color: var(--blue-border);
+    background: var(--blue-bg);
+    color: var(--blue-text);
+  }
+
+  .explain-box {
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Achterbahn: Wie setzen sich die Kräfte zusammen?</h1>
+  <p id="subtitleText">Die Kraftpfeile werden getrennt im gleichen Maßstab gezeichnet. So lässt sich die benötigte Zentripetalkraft direkt mit den tatsächlich wirkenden Kräften vergleichen.</p>
+</div>
+
+<div class="grid">
+  <!-- Left Card: Track -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Fahrstrecke</div>
+      <div class="badge">Looping kreisförmig · gegen den Uhrzeigersinn</div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="trackCanvas" width="660" height="320"></canvas>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="line-solid"></span> Schiene</div>
+      <div class="legend-item"><span class="line-dashed-red"></span> Fahrtverlauf / Wurfparabel ab gewähltem Punkt</div>
+      <div class="legend-item"><span class="line-dashed-green"></span> Kreisbahn ohne Schienenkraft (<span class="vec">F</span><sub>g</sub> = <span class="vec">F</span><sub>Z,nötig</sub>)</div>
+    </div>
+
+    <div class="controls-row">
+      <div class="btn-group">
+        <button class="pos-btn" data-pos="A" id="btnA">A · Kuppe</button>
+        <button class="pos-btn" data-pos="B" id="btnB">B · unten</button>
+        <button class="pos-btn active" data-pos="C" id="btnC">C · oben</button>
+      </div>
+
+      <label class="rail-toggle">
+        <input type="checkbox" id="railActive" checked />
+        <span>Schienenkraft <span class="vec">F</span><sub>Schiene</sub> aktiv</span>
+      </label>
+    </div>
+
+    <div class="preset-row">
+      <button class="preset-btn" id="presetA">Schwerelos für A (Kuppe) einstellen: <span class="vec">F</span><sub>g</sub> = <span class="vec">F</span><sub>Z,nötig</sub></button>
+      <button class="preset-btn" id="presetC">Schwerelos für C (Looping oben) einstellen: <span class="vec">F</span><sub>g</sub> = <span class="vec">F</span><sub>Z,nötig</sub></button>
+    </div>
+
+    <div class="sliders">
+      <div class="slider-item">
+        <label><span>Geschwindigkeit v</span><span class="val" id="vVal">9,9 m/s</span></label>
+        <input type="range" id="vSlider" min="2" max="30" step="0.1" value="9.9" />
+      </div>
+      <div class="slider-item">
+        <label><span>Loopingradius r</span><span class="val" id="rVal">10,0 m</span></label>
+        <input type="range" id="rSlider" min="5" max="25" step="0.5" value="10" />
+      </div>
+      <div class="slider-item">
+        <label><span>Kuppenradius R</span><span class="val" id="RVal">25 m</span></label>
+        <input type="range" id="RSlider" min="10" max="45" step="1" value="25" />
+      </div>
+      <div class="slider-item">
+        <label><span>Fahrgastmasse m</span><span class="val" id="mVal">85 kg</span></label>
+        <input type="range" id="mSlider" min="40" max="140" step="1" value="85" />
+      </div>
+    </div>
+
+    <div class="footnote">
+      Klicke auf <b>A</b>, <b>B</b> oder <b>C</b>, um das Kart fest auf diesen Punkt zu setzen. Reibung wird vernachlässigt; g = 9,81 m/s².
+    </div>
+  </div>
+
+  <!-- Right Card: Forces -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Kräftebilanz – Pfeile im gleichen Maßstab</div>
+      <div class="badge" id="posBadge">C – Looping oben</div>
+    </div>
+
+    <div class="frame-tabs">
+      <button class="frame-btn active" id="frameInertial">Bezugssystem außen: Zentripetalkraft</button>
+      <button class="frame-btn" id="frameComoving">Mitbewegtes System: Zentrifugalkraft</button>
+    </div>
+
+    <div class="formula-box" id="formulaBox">
+      <span class="vec">F</span><sub>Z,nötig</sub> = <span class="vec">F</span><sub>g</sub> + <span class="vec">F</span><sub>Schiene</sub>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="vectorCanvas" width="600" height="430"></canvas>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label blue">Gewichtskraft <span class="vec">F</span><sub>g</sub></div>
+        <div class="metric-value" id="fgMetric">834 N (1,00 g)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label green">Schienenkraft <span class="vec">F</span><sub>Schiene</sub></div>
+        <div class="metric-value" id="frailMetric">0 N (0,00 g)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label red" id="fzMetricLabel">Benötigte Zentripetalkraft <span class="vec">F</span><sub>Z,nötig</sub></div>
+        <div class="metric-value" id="fzMetric">834 N (1,00 g)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label slate">Gefühlte g-Belastung (Sitzdruck)</div>
+        <div class="metric-value" id="gfeltMetric">0,00 g</div>
+      </div>
+    </div>
+
+    <div class="status-box" id="statusBox">
+      Schwereloser Scheitelpunkt: Die Gewichtskraft allein reicht exakt als Zentripetalkraft aus – die Schiene übt keine Kraft aus (0 N).
+    </div>
+
+    <div class="explain-box" id="explainBox">
+      <b>So liest du die Pfeile (Bezugssystem außen):</b> Links stehen die tatsächlich wirkenden Kräfte (<span class="vec">F</span><sub>g</sub> und <span class="vec">F</span><sub>Schiene</sub>) Spitze-an-Schaft addiert. Rechts steht die für die Kreisbahn <b>benötigte Zentripetalkraft</b> <span class="vec">F</span><sub>Z,nötig</sub> = m·v²/r. Ist die Schienenkraft aktiv, ergänzt sie <span class="vec">F</span><sub>g</sub> exakt auf <span class="vec">F</span><sub>Z,nötig</sub>.
+    </div>
+  </div>
+</div>
+
+<script>
+  const g = 9.81;
+  const VEC_F = '<span class="vec">F</span>';
+
+  const state = {
+    pos: 'C',          // 'A', 'B', 'C'
+    railActive: true,
+    frame: 'inertial', // 'inertial' | 'comoving'
+    v: 9.9,
+    r: 10.0,
+    R: 25,
+    m: 85
+  };
+
+  // Elements
+  const trackCanvas = document.getElementById('trackCanvas');
+  const tCtx = trackCanvas.getContext('2d');
+  const vectorCanvas = document.getElementById('vectorCanvas');
+  const vCtx = vectorCanvas.getContext('2d');
+
+  const btnA = document.getElementById('btnA');
+  const btnB = document.getElementById('btnB');
+  const btnC = document.getElementById('btnC');
+  const railActiveCb = document.getElementById('railActive');
+  const presetA = document.getElementById('presetA');
+  const presetC = document.getElementById('presetC');
+
+  const vSlider = document.getElementById('vSlider');
+  const rSlider = document.getElementById('rSlider');
+  const RSlider = document.getElementById('RSlider');
+  const mSlider = document.getElementById('mSlider');
+
+  const vVal = document.getElementById('vVal');
+  const rVal = document.getElementById('rVal');
+  const RVal = document.getElementById('RVal');
+  const mVal = document.getElementById('mVal');
+
+  const frameInertialBtn = document.getElementById('frameInertial');
+  const frameComovingBtn = document.getElementById('frameComoving');
+  const posBadge = document.getElementById('posBadge');
+  const formulaBox = document.getElementById('formulaBox');
+  const subtitleText = document.getElementById('subtitleText');
+
+  const fgMetric = document.getElementById('fgMetric');
+  const frailMetric = document.getElementById('frailMetric');
+  const fzMetricLabel = document.getElementById('fzMetricLabel');
+  const fzMetric = document.getElementById('fzMetric');
+  const gfeltMetric = document.getElementById('gfeltMetric');
+  const statusBox = document.getElementById('statusBox');
+  const explainBox = document.getElementById('explainBox');
+
+  function fmtNum(val, decimals = 0) {
+    return val.toFixed(decimals).replace('.', ',');
+  }
+
+  function fmtForceWithG(forceAbs, fg) {
+    const gRatio = fg > 0 ? forceAbs / fg : 0;
+    return `${fmtNum(Math.round(forceAbs), 0)} N (${fmtNum(gRatio, 2)} g)`;
+  }
+
+  // Signed convention: downward = positive (+), upward = negative (-)
+  function computePhysics() {
+    const Fg = state.m * g; // always downward (+)
+    const radius = state.pos === 'A' ? state.R : state.r;
+    const FZ_mag = (state.m * state.v * state.v) / radius;
+
+    // Direction of required centripetal force (towards center of curvature):
+    // A (Kuppe): center is below -> downward (+)
+    // B (Looping unten): center is above -> upward (-)
+    // C (Looping oben): center is below -> downward (+)
+    const FZ_signed = (state.pos === 'B') ? -FZ_mag : +FZ_mag;
+
+    // Weightlessness check
+    const diffAtTop = Math.abs(FZ_mag - Fg);
+    const isWeightlessMatch = (state.pos === 'A' || state.pos === 'C') && (diffAtTop <= Math.max(4, 0.012 * Fg));
+
+    let Frail_signed = 0;
+    if (state.railActive) {
+      if (isWeightlessMatch) {
+        Frail_signed = 0;
+      } else {
+        Frail_signed = FZ_signed - Fg;
+      }
+    } else {
+      Frail_signed = 0;
+    }
+
+    const Frail_abs = Math.abs(Frail_signed);
+
+    // Perceived g-load
+    let gFelt = 0;
+    if (!state.railActive || isWeightlessMatch || Frail_abs < 0.5) {
+      gFelt = 0;
+    } else if (state.pos === 'A' || state.pos === 'B') {
+      gFelt = -Frail_signed / Fg;
+    } else if (state.pos === 'C') {
+      gFelt = Frail_signed / Fg;
+    }
+
+    // Centrifugal force in comoving frame is opposite to centripetal force
+    const FFug_signed = -FZ_signed;
+
+    return {
+      Fg,
+      FZ_mag,
+      FZ_signed,
+      FFug_signed,
+      Frail_signed,
+      Frail_abs,
+      gFelt,
+      radius,
+      isWeightlessMatch
+    };
+  }
+
+  function updateUI() {
+    const p = computePhysics();
+
+    // Update slider labels
+    vVal.textContent = `${fmtNum(state.v, 1)} m/s`;
+    rVal.textContent = `${fmtNum(state.r, 1)} m`;
+    RVal.textContent = `${fmtNum(state.R, 0)} m`;
+    mVal.textContent = `${fmtNum(state.m, 0)} kg`;
+
+    // Position badge & buttons
+    btnA.classList.toggle('active', state.pos === 'A');
+    btnB.classList.toggle('active', state.pos === 'B');
+    btnC.classList.toggle('active', state.pos === 'C');
+
+    if (state.pos === 'A') posBadge.textContent = 'A – Kuppe';
+    if (state.pos === 'B') posBadge.textContent = 'B – Looping unten';
+    if (state.pos === 'C') posBadge.textContent = 'C – Looping oben';
+
+    // Frame tabs
+    frameInertialBtn.classList.toggle('active', state.frame === 'inertial');
+    frameComovingBtn.classList.toggle('active', state.frame === 'comoving');
+
+    // Metric cards
+    fgMetric.textContent = fmtForceWithG(p.Fg, p.Fg);
+    frailMetric.textContent = fmtForceWithG(p.Frail_abs, p.Fg);
+
+    if (state.frame === 'inertial') {
+      subtitleText.textContent = 'Die Kraftpfeile werden getrennt im gleichen Maßstab gezeichnet. So lässt sich die benötigte Zentripetalkraft direkt mit den tatsächlich wirkenden Kräften vergleichen.';
+      formulaBox.innerHTML = state.railActive
+        ? `${VEC_F}<sub>Z,nötig</sub> = ${VEC_F}<sub>g</sub> + ${VEC_F}<sub>Schiene</sub>`
+        : `${VEC_F}<sub>Schiene</sub> = 0 N &nbsp;→&nbsp; nur ${VEC_F}<sub>g</sub> wirkt (Vergleich mit ${VEC_F}<sub>Z,nötig</sub>)`;
+      fzMetricLabel.className = 'metric-label red';
+      fzMetricLabel.innerHTML = `Benötigte Zentripetalkraft ${VEC_F}<sub>Z,nötig</sub>`;
+      fzMetric.textContent = fmtForceWithG(p.FZ_mag, p.Fg);
+    } else {
+      subtitleText.textContent = 'Im mitbewegten Bezugssystem des Karts stehen Gewichtskraft, Schienenkraft und die nach außen gerichtete Zentrifugalkraft im Kräftegleichgewicht.';
+      formulaBox.innerHTML = state.railActive
+        ? `${VEC_F}<sub>Schiene</sub> = ${VEC_F}<sub>Fug</sub> + ${VEC_F}<sub>g</sub> &nbsp;(Kräftegleichgewicht im Kart)`
+        : `${VEC_F}<sub>Schiene</sub> = 0 N &nbsp;→&nbsp; ${VEC_F}<sub>g</sub> und ${VEC_F}<sub>Fug</sub> bei Kreisbewegung heben sich nur bei ${VEC_F}<sub>g</sub> = ${VEC_F}<sub>Fug</sub> auf`;
+      fzMetricLabel.className = 'metric-label purple';
+      fzMetricLabel.innerHTML = `${VEC_F}<sub>Fug</sub> bei Kreisbewegung (nach außen)`;
+      fzMetric.textContent = fmtForceWithG(p.FZ_mag, p.Fg);
+    }
+
+    // Perceived g-load formatting
+    const gAbs = Math.abs(p.gFelt) < 0.005 ? 0 : p.gFelt;
+    gfeltMetric.textContent = `${fmtNum(gAbs, 2)} g`;
+
+    // Status message
+    statusBox.className = 'status-box';
+    const isComoving = state.frame === 'comoving';
+
+    if (!state.railActive) {
+      if (p.isWeightlessMatch) {
+        statusBox.className = 'status-box blue';
+        statusBox.innerHTML = isComoving
+          ? `<b>Schwerelosigkeit (${VEC_F}<sub>Schiene</sub> = 0 N):</b> Die Gewichtskraft ${VEC_F}<sub>g</sub> und ${VEC_F}<sub>Fug</sub> bei Kreisbewegung sind exakt gleich groß und entgegengesetzt. Das Kart folgt der Kreisbahn auch ohne Schienenkraft.`
+          : `<b>Schwerelosigkeit (${VEC_F}<sub>Schiene</sub> = 0 N):</b> Die Gewichtskraft ${VEC_F}<sub>g</sub> liefert allein exakt die benötigte Zentripetalkraft ${VEC_F}<sub>Z,nötig</sub>. Die Schiene wird gar nicht benötigt – das Kart bleibt auf der Kreisbahn.`;
+      } else {
+        statusBox.className = 'status-box amber';
+        if (state.pos === 'A') {
+          statusBox.innerHTML = p.FZ_mag > p.Fg
+            ? `<b>Schienenkraft ausgeschaltet (0 N):</b> Die Gewichtskraft ${VEC_F}<sub>g</sub> ist kleiner als die benötigte Zentripetalkraft ${VEC_F}<sub>Z,nötig</sub>. Ohne Gegenschiene hebt das Kart von der Kuppe ab und fliegt auf einer flacheren Wurfparabel nach rechts.`
+            : `<b>Schienenkraft ausgeschaltet (0 N):</b> Ohne tragende Schiene nach oben fällt das Kart unter der Gewichtskraft ${VEC_F}<sub>g</sub> auf einer steileren Wurfparabel nach rechts unten.`;
+        } else if (state.pos === 'B') {
+          statusBox.innerHTML = `<b>Schienenkraft ausgeschaltet (0 N):</b> Ohne Führungskraft der Schiene nach oben kann das Kart nicht in den Looping einbiegen und fällt unter ${VEC_F}<sub>g</sub> auf einer Wurfparabel nach rechts unten.`;
+        } else {
+          statusBox.innerHTML = p.FZ_mag > p.Fg
+            ? `<b>Schienenkraft ausgeschaltet (0 N):</b> Oben im Looping übersteigt die benötigte Zentripetalkraft ${VEC_F}<sub>Z,nötig</sub> die Gewichtskraft ${VEC_F}<sub>g</sub>. Ohne Schiene nach unten trägt es das Kart nach links oben aus dem Looping hinaus.`
+            : `<b>Schienenkraft ausgeschaltet (0 N):</b> Da ${VEC_F}<sub>g</sub> größer ist als ${VEC_F}<sub>Z,nötig</sub> und keine innere Schiene stützt, fällt das Kart nach innen/unten aus dem Looping heraus.`;
+        }
+      }
+    } else {
+      if (p.isWeightlessMatch) {
+        statusBox.className = 'status-box blue';
+        statusBox.innerHTML = isComoving
+          ? `<b>Schwereloser Grenzfall (${VEC_F}<sub>Schiene</sub> = 0 N):</b> Gewichtskraft ${VEC_F}<sub>g</sub> und ${VEC_F}<sub>Fug</sub> bei Kreisbewegung sind gleich groß und entgegengesetzt. Die Schiene übt weder Druck noch Zug aus – du schwebst schwerelos im Sitz.`
+          : `<b>Schwereloser Grenzfall (${VEC_F}<sub>Schiene</sub> = 0 N):</b> Die Gewichtskraft ${VEC_F}<sub>g</sub> allein liefert exakt die benötigte Zentripetalkraft ${VEC_F}<sub>Z,nötig</sub>. Die Schiene übt keine Kraft aus – du schwebst schwerelos im Sitz.`;
+      } else if (state.pos === 'A') {
+        if (p.Frail_signed < 0) {
+          statusBox.innerHTML = isComoving
+            ? `<b>Kuppe (${VEC_F}<sub>g</sub> > ${VEC_F}<sub>Fug</sub>):</b> Die Gewichtskraft überwiegt ${VEC_F}<sub>Fug</sub> bei Kreisbewegung. Die Schiene stützt das Kart von unten nach oben ab, sodass Kräftegleichgewicht herrscht.`
+            : `<b>Kuppe (${VEC_F}<sub>g</sub> > ${VEC_F}<sub>Z,nötig</sub>):</b> Die Gewichtskraft ist größer als die benötigte Zentripetalkraft. Die Schiene drückt von unten nach oben dagegen, damit das Kart nicht zu stark nach unten beschleunigt wird.`;
+        } else {
+          statusBox.className = 'status-box amber';
+          statusBox.innerHTML = isComoving
+            ? `<b>Hohe Geschwindigkeit auf der Kuppe (${VEC_F}<sub>Fug</sub> > ${VEC_F}<sub>g</sub>):</b> ${VEC_F}<sub>Fug</sub> bei Kreisbewegung nach außen ist größer als die Gewichtskraft. Die Gegenschiene (Bügel) hält das Kart nach unten auf der Bahn (negative g-Belastung).`
+            : `<b>Hohe Geschwindigkeit auf der Kuppe (${VEC_F}<sub>Z,nötig</sub> > ${VEC_F}<sub>g</sub>):</b> Die Gewichtskraft allein reicht nicht als Zentripetalkraft aus. Die Gegenschiene zieht das Kart zusätzlich nach unten auf die Kreisbahn (negative g-Belastung).`;
+        }
+      } else if (state.pos === 'B') {
+        statusBox.innerHTML = isComoving
+          ? `<b>Tiefster Punkt B:</b> Gewichtskraft ${VEC_F}<sub>g</sub> und ${VEC_F}<sub>Fug</sub> bei Kreisbewegung zeigen beide nach unten. Die Schiene drückt mit voller Summe nach oben (starker Sitzdruck > 1 g).`
+          : `<b>Tiefster Punkt B:</b> Die benötigte Zentripetalkraft zeigt nach oben, die Gewichtskraft nach unten. Die Schiene muss ${VEC_F}<sub>g</sub> ausgleichen und zusätzlich ${VEC_F}<sub>Z,nötig</sub> nach oben aufbringen (starker Sitzdruck > 1 g).`;
+      } else {
+        if (p.Frail_signed > 0) {
+          statusBox.innerHTML = isComoving
+            ? `<b>Hohe Geschwindigkeit oben im Looping (${VEC_F}<sub>Fug</sub> > ${VEC_F}<sub>g</sub>):</b> ${VEC_F}<sub>Fug</sub> bei Kreisbewegung drückt das Kart nach außen gegen die äußere Schiene. Die Schiene drückt nach unten dagegen – du wirst fest in den Sitz gepresst.`
+            : `<b>Hohe Geschwindigkeit oben im Looping (${VEC_F}<sub>Z,nötig</sub> > ${VEC_F}<sub>g</sub>):</b> Die Gewichtskraft allein reicht für diese Geschwindigkeit nicht aus. Die äußere Schiene drückt zusätzlich nach unten zum Kreismittelpunkt – du wirst in den Sitz gepresst.`;
+        } else {
+          statusBox.className = 'status-box amber';
+          statusBox.innerHTML = isComoving
+            ? `<b>Geringe Geschwindigkeit oben im Looping (${VEC_F}<sub>g</sub> > ${VEC_F}<sub>Fug</sub>):</b> Die Gewichtskraft nach unten ist größer als ${VEC_F}<sub>Fug</sub> bei Kreisbewegung nach oben. Die innere Gegenschiene stützt das Kart von unten ab, damit es nicht nach innen fällt.`
+            : `<b>Geringe Geschwindigkeit oben im Looping (${VEC_F}<sub>g</sub> > ${VEC_F}<sub>Z,nötig</sub>):</b> Die Gewichtskraft ist größer als die für die Kreisbahn benötigte Zentripetalkraft. Die innere Gegenschiene hält das Kart nach oben, damit es nicht nach innen aus der Bahn fällt.`;
+        }
+      }
+    }
+
+    // Explain box
+    if (state.frame === 'inertial') {
+      explainBox.innerHTML = `<b>So liest du die Pfeile (Bezugssystem außen):</b> Links stehen die tatsächlich wirkenden Kräfte (${VEC_F}<sub>g</sub> und ${VEC_F}<sub>Schiene</sub>) Spitze-an-Schaft addiert. Rechts steht die für die Kreisbahn <b>benötigte Zentripetalkraft</b> ${VEC_F}<sub>Z,nötig</sub> = m·v²/r. Ist die Schienenkraft aktiv, ergänzt sie ${VEC_F}<sub>g</sub> exakt auf ${VEC_F}<sub>Z,nötig</sub> (${VEC_F}<sub>Z,nötig</sub> = ${VEC_F}<sub>g</sub> + ${VEC_F}<sub>Schiene</sub>).`;
+    } else {
+      explainBox.innerHTML = `<b>So liest du die Pfeile (Mitbewegtes Bezugssystem im Kart):</b> Gewichtskraft ${VEC_F}<sub>g</sub>, Schienenkraft ${VEC_F}<sub>Schiene</sub> und <b>${VEC_F}<sub>Fug</sub> bei Kreisbewegung</b> (= m·v²/r, nach außen) stehen im Gleichgewicht. Die Vektoraddition liefert ${VEC_F}<sub>Schiene</sub> = ${VEC_F}<sub>Fug</sub> + ${VEC_F}<sub>g</sub>.`;
+    }
+
+    drawTrack(p);
+    drawVectors(p);
+  }
+
+  // Helper to draw "F" with a crisp vector arrow on top + subscript on Canvas
+  function drawVecSubText(ctx, subText, x, y, color, align = 'center', fontSize = 13, suffixText = '') {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const fWidth = ctx.measureText('F').width;
+
+    const subSize = Math.round(fontSize * 0.78);
+    ctx.font = `bold ${subSize}px sans-serif`;
+    const subWidth = ctx.measureText(subText).width;
+
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const sufWidth = suffixText ? ctx.measureText(suffixText).width : 0;
+
+    const totalWidth = fWidth + subWidth + sufWidth;
+    let startX = x;
+    if (align === 'center') startX = x - totalWidth / 2;
+    else if (align === 'right') startX = x - totalWidth;
+
+    // Draw F
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText('F', startX, y);
+
+    // Draw vector arrow directly above F
+    const arrowY = y - fontSize * 0.92;
+    const ax1 = startX - 0.5;
+    const ax2 = startX + fWidth + 1.5;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(ax1, arrowY);
+    ctx.lineTo(ax2, arrowY);
+    ctx.lineTo(ax2 - 3.2, arrowY - 2.3);
+    ctx.moveTo(ax2, arrowY);
+    ctx.lineTo(ax2 - 3.2, arrowY + 2.3);
+    ctx.stroke();
+
+    // Draw Subscript
+    ctx.font = `bold ${subSize}px sans-serif`;
+    ctx.fillText(subText, startX + fWidth, y + 3.5);
+
+    // Draw optional suffix
+    if (suffixText) {
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.fillText(suffixText, startX + fWidth + subWidth, y);
+    }
+
+    ctx.restore();
+  }
+
+  function drawArrow(ctx, x1, y1, x2, y2, color, width = 3, headLen = 10) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    if (len < 1.5) return;
+
+    const angle = Math.atan2(dy, dx);
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+
+    const effectiveHead = Math.min(headLen, len * 0.45);
+    const endX = x2 - Math.cos(angle) * (effectiveHead * 0.65);
+    const endY = y2 - Math.sin(angle) * (effectiveHead * 0.65);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(
+      x2 - effectiveHead * Math.cos(angle - Math.PI / 6),
+      y2 - effectiveHead * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.lineTo(
+      x2 - effectiveHead * Math.cos(angle + Math.PI / 6),
+      y2 - effectiveHead * Math.sin(angle + Math.PI / 6)
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCart(ctx, x, y, angleRad, upsideDown = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angleRad);
+    if (upsideDown) {
+      ctx.scale(1, -1);
+    }
+
+    // Wheels
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(-10, -4, 4, 0, Math.PI * 2);
+    ctx.arc(10, -4, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Passenger head & torso
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(0, -18, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Cart body
+    ctx.fillStyle = '#0284c7';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(-16, -14, 32, 9, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawTrack(p) {
+    const W = trackCanvas.width;
+    const H = trackCanvas.height;
+    tCtx.clearRect(0, 0, W, H);
+
+    const groundY = 235;
+    const leftStartX = 28;
+    const hillStartX = 52;
+    const hillEndX = 248;
+    const hillMidX = (hillStartX + hillEndX) / 2;
+    const halfChord = (hillEndX - hillStartX) / 2;
+
+    const R_px = 140 + (state.R - 10) * 3.8;
+    const dyCenter = Math.sqrt(Math.max(100, R_px * R_px - halfChord * halfChord));
+    const hillCenterY = groundY + dyCenter;
+    const hillTopY = hillCenterY - R_px;
+    const thetaStart = Math.asin(halfChord / R_px);
+
+    const loopCenterX = 468;
+    const loopR_px = 46 + (state.r - 5) * 2.2;
+    const loopCenterY = groundY - loopR_px;
+    const loopTopY = groundY - 2 * loopR_px;
+    const rightEndX = 630;
+
+    // Guide lines under Kuppe
+    tCtx.save();
+    tCtx.strokeStyle = '#cbd5e1';
+    tCtx.lineWidth = 1.2;
+    tCtx.beginPath();
+    tCtx.moveTo(hillStartX, groundY);
+    tCtx.lineTo(hillStartX, H - 10);
+    tCtx.moveTo(hillEndX, groundY);
+    tCtx.lineTo(hillEndX, H - 10);
+    tCtx.stroke();
+
+    tCtx.setLineDash([4, 4]);
+    tCtx.strokeStyle = '#94a3b8';
+    tCtx.beginPath();
+    tCtx.moveTo(hillMidX, hillTopY);
+    tCtx.lineTo(hillMidX, H - 10);
+    tCtx.stroke();
+    tCtx.restore();
+
+    tCtx.fillStyle = '#64748b';
+    tCtx.font = 'bold 12px sans-serif';
+    tCtx.fillText('R', hillMidX + 6, hillTopY + 26);
+
+    // Draw solid black track
+    tCtx.save();
+    tCtx.strokeStyle = '#1e293b';
+    tCtx.lineWidth = 3.2;
+    tCtx.lineCap = 'round';
+    tCtx.lineJoin = 'round';
+
+    tCtx.beginPath();
+    tCtx.moveTo(leftStartX, groundY);
+    tCtx.lineTo(hillStartX, groundY);
+    tCtx.stroke();
+
+    tCtx.beginPath();
+    tCtx.arc(hillMidX, hillCenterY, R_px, -Math.PI / 2 - thetaStart, -Math.PI / 2 + thetaStart, false);
+    tCtx.stroke();
+
+    tCtx.beginPath();
+    tCtx.moveTo(hillEndX, groundY);
+    tCtx.lineTo(rightEndX, groundY);
+    tCtx.stroke();
+
+    tCtx.beginPath();
+    tCtx.arc(loopCenterX, loopCenterY, loopR_px, 0, Math.PI * 2);
+    tCtx.stroke();
+    tCtx.restore();
+
+    // Loop radius indicator
+    tCtx.save();
+    tCtx.setLineDash([4, 4]);
+    tCtx.strokeStyle = '#94a3b8';
+    tCtx.lineWidth = 1.2;
+    const radAng = -Math.PI / 4;
+    tCtx.beginPath();
+    tCtx.moveTo(loopCenterX, loopCenterY);
+    tCtx.lineTo(loopCenterX + loopR_px * Math.cos(radAng), loopCenterY + loopR_px * Math.sin(radAng));
+    tCtx.stroke();
+    tCtx.restore();
+    tCtx.fillStyle = '#64748b';
+    tCtx.font = 'bold 12px sans-serif';
+    tCtx.fillText('r', loopCenterX + loopR_px * 0.42, loopCenterY - loopR_px * 0.46);
+
+    // Counter-clockwise direction arrows
+    const arrowOffset = loopR_px + 18;
+    drawArrow(tCtx, loopCenterX + arrowOffset, loopCenterY + 26, loopCenterX + arrowOffset, loopCenterY - 26, '#334155', 1.8, 8);
+    drawArrow(tCtx, loopCenterX - arrowOffset, loopCenterY - 26, loopCenterX - arrowOffset, loopCenterY + 26, '#334155', 1.8, 8);
+
+    // Labels A, B, C
+    tCtx.fillStyle = '#0f172a';
+    tCtx.font = 'bold 13px sans-serif';
+    tCtx.textAlign = 'center';
+    tCtx.fillText('A', hillMidX, hillTopY - 30);
+    tCtx.fillText('B', loopCenterX, groundY + 18);
+    tCtx.fillText('C', loopCenterX, loopTopY - 28);
+
+    // Dashed path from selected point
+    tCtx.save();
+    tCtx.lineWidth = 3;
+    tCtx.setLineDash([6, 5]);
+
+    const followTrack = state.railActive || p.isWeightlessMatch;
+    tCtx.strokeStyle = (!state.railActive && p.isWeightlessMatch) ? '#16a34a' : '#dc2626';
+
+    if (followTrack) {
+      tCtx.beginPath();
+      if (state.pos === 'A') {
+        tCtx.arc(hillMidX, hillCenterY, R_px, -Math.PI / 2, -Math.PI / 2 + thetaStart, false);
+        tCtx.lineTo(loopCenterX, groundY);
+        tCtx.arc(loopCenterX, loopCenterY, loopR_px, Math.PI / 2, -3 * Math.PI / 2, true);
+        tCtx.lineTo(rightEndX, groundY);
+      } else if (state.pos === 'B') {
+        tCtx.arc(loopCenterX, loopCenterY, loopR_px, Math.PI / 2, -3 * Math.PI / 2, true);
+        tCtx.lineTo(rightEndX, groundY);
+      } else if (state.pos === 'C') {
+        tCtx.arc(loopCenterX, loopCenterY, loopR_px, -Math.PI / 2, -3 * Math.PI / 2, true);
+        tCtx.lineTo(rightEndX, groundY);
+      }
+      tCtx.stroke();
+    } else {
+      tCtx.beginPath();
+      if (state.pos === 'A') {
+        const x0 = hillMidX;
+        const y0 = hillTopY;
+        const k = p.Fg / Math.max(1, p.FZ_mag);
+        const maxDx = 190;
+        for (let i = 0; i <= 40; i++) {
+          const dx = (maxDx * i) / 40;
+          const dy = 0.5 * k * (dx * dx) / R_px;
+          const px = x0 + dx;
+          const py = y0 + dy;
+          if (i === 0) tCtx.moveTo(px, py);
+          else tCtx.lineTo(px, py);
+          if (py > H - 8) break;
+        }
+      } else if (state.pos === 'B') {
+        const x0 = loopCenterX;
+        const y0 = groundY;
+        const k = p.Fg / Math.max(1, p.FZ_mag);
+        const maxDx = 155;
+        for (let i = 0; i <= 40; i++) {
+          const dx = (maxDx * i) / 40;
+          const dy = 0.5 * Math.max(0.25, k) * (dx * dx) / loopR_px;
+          const px = x0 + dx;
+          const py = y0 + dy;
+          if (i === 0) tCtx.moveTo(px, py);
+          else tCtx.lineTo(px, py);
+          if (py > H - 8) break;
+        }
+      } else if (state.pos === 'C') {
+        const x0 = loopCenterX;
+        const y0 = loopTopY;
+        const k = p.Fg / Math.max(1, p.FZ_mag);
+        const maxDx = 165;
+        for (let i = 0; i <= 40; i++) {
+          const dx = (maxDx * i) / 40;
+          const dy = 0.5 * k * (dx * dx) / loopR_px;
+          const px = x0 - dx;
+          const py = y0 + dy;
+          if (i === 0) tCtx.moveTo(px, py);
+          else tCtx.lineTo(px, py);
+          if (py > H - 8 || px < 12) break;
+        }
+      }
+      tCtx.stroke();
+    }
+    tCtx.restore();
+
+    let cartX = hillMidX;
+    let cartY = hillTopY;
+    let upsideDown = false;
+
+    if (state.pos === 'A') {
+      cartX = hillMidX;
+      cartY = hillTopY;
+      upsideDown = false;
+    } else if (state.pos === 'B') {
+      cartX = loopCenterX;
+      cartY = groundY;
+      upsideDown = false;
+    } else if (state.pos === 'C') {
+      cartX = loopCenterX;
+      cartY = loopTopY;
+      upsideDown = true;
+    }
+
+    drawCart(tCtx, cartX, cartY, 0, upsideDown);
+
+    tCtx.save();
+    tCtx.fillStyle = '#e11d48';
+    tCtx.beginPath();
+    tCtx.arc(cartX, cartY, 4.5, 0, Math.PI * 2);
+    tCtx.fill();
+    tCtx.restore();
+  }
+
+  function drawVectors(p) {
+    const W = 600;
+
+    // Constant reference arrow length for F_g (1.00 g = 36 px)
+    // All other arrows scale strictly linearly with F_g without any cap!
+    const FG_REF_PX = 36;
+    const scale = FG_REF_PX / p.Fg; // px per Newton
+
+    // Compute exact relative y-coordinates (in px relative to y0 = 0 N baseline)
+    const relFG_end = p.Fg * scale;
+    const relFrail_end = (p.Fg + p.Frail_signed) * scale;
+    const relFZ_end = p.FZ_signed * scale;
+    const relFFug_start = relFrail_end;
+    const relFFug_end = relFFug_start + p.FFug_signed * scale;
+
+    const relYs = [0, relFG_end, relFrail_end];
+    if (state.frame === 'inertial') {
+      relYs.push(relFZ_end);
+    } else {
+      relYs.push(relFFug_end);
+    }
+
+    const minRelY = Math.min(...relYs);
+    const maxRelY = Math.max(...relYs);
+
+    const topPad = 86;
+    const bottomPad = 36;
+    const requiredHeight = Math.max(380, Math.ceil(topPad + (maxRelY - minRelY) + bottomPad));
+
+    // Resize canvas dynamically so no arrow is ever clipped or capped
+    if (vectorCanvas.height !== requiredHeight) {
+      vectorCanvas.height = requiredHeight;
+    }
+    const H = vectorCanvas.height;
+    vCtx.clearRect(0, 0, W, H);
+
+    // Move 0 N baseline dynamically so everything fits cleanly inside [topPad, H - bottomPad]
+    const y0 = topPad - minRelY;
+
+    const col1X = 115; // F_g
+    const col2X = 300; // F_Schiene
+    const col3X = 485; // F_Z,nötig or F_Fug bei Kreisbewegung
+
+    // Column headers with vector arrows above F
+    vCtx.textAlign = 'center';
+    drawVecSubText(vCtx, 'g', col1X, 28, '#2563eb', 'center', 13);
+    vCtx.fillStyle = '#2563eb';
+    vCtx.font = '11px sans-serif';
+    vCtx.fillText('Gewichtskraft (wirkt immer)', col1X, 45);
+
+    drawVecSubText(vCtx, 'Schiene', col2X, 28, '#16a34a', 'center', 13);
+    vCtx.fillStyle = '#16a34a';
+    vCtx.font = '11px sans-serif';
+    vCtx.fillText(state.railActive ? 'Schienenkraft (wirkt)' : 'Schienenkraft (aus)', col2X, 45);
+
+    if (state.frame === 'inertial') {
+      drawVecSubText(vCtx, 'Z,nötig', col3X, 28, '#dc2626', 'center', 13, ' = m·v²/r');
+      vCtx.fillStyle = '#dc2626';
+      vCtx.font = '11px sans-serif';
+      vCtx.fillText('Benötigte Zentripetalkraft', col3X, 45);
+    } else {
+      drawVecSubText(vCtx, 'Fug', col3X, 28, '#7c3aed', 'center', 13, ' bei Kreisbewegung');
+      vCtx.fillStyle = '#7c3aed';
+      vCtx.font = '11px sans-serif';
+      vCtx.fillText('Zentrifugalkraft (= m·v²/r)', col3X, 45);
+    }
+
+    // Subtle horizontal zero baseline (shifts automatically with y0)
+    vCtx.save();
+    vCtx.strokeStyle = '#cbd5e1';
+    vCtx.lineWidth = 1.2;
+    vCtx.beginPath();
+    vCtx.moveTo(28, y0);
+    vCtx.lineTo(W - 28, y0);
+    vCtx.stroke();
+    vCtx.restore();
+
+    vCtx.fillStyle = '#64748b';
+    vCtx.font = 'bold 10px sans-serif';
+    vCtx.textAlign = 'left';
+    vCtx.fillText('0 N', 32, y0 - 5);
+
+    // Key y-positions on canvas
+    const yFG_end = y0 + relFG_end;
+    const yFrail_end = y0 + relFrail_end;
+    const yFZ_end = y0 + relFZ_end;
+
+    // Dashed tip-to-tail projection lines
+    vCtx.save();
+    vCtx.setLineDash([4, 4]);
+    vCtx.strokeStyle = '#94a3b8';
+    vCtx.lineWidth = 1.2;
+
+    // From tip of F_g to tail of F_Schiene
+    vCtx.beginPath();
+    vCtx.moveTo(col1X, yFG_end);
+    vCtx.lineTo(col2X, yFG_end);
+    vCtx.stroke();
+
+    // From tip of F_Schiene to column 3
+    vCtx.beginPath();
+    vCtx.moveTo(col2X, yFrail_end);
+    vCtx.lineTo(col3X, yFrail_end);
+    vCtx.stroke();
+
+    // In comoving frame, also connect 0 N baseline to tip of F_Fug
+    if (state.frame === 'comoving' && state.railActive) {
+      vCtx.beginPath();
+      vCtx.moveTo(col1X, y0);
+      vCtx.lineTo(col3X, y0);
+      vCtx.stroke();
+    }
+    vCtx.restore();
+
+    // 1) Draw F_g arrow (blue, constant short reference length)
+    drawArrow(vCtx, col1X, y0, col1X, yFG_end, '#2563eb', 3.5, 10);
+    vCtx.fillStyle = '#2563eb';
+    vCtx.font = 'bold 12px sans-serif';
+    vCtx.textAlign = 'right';
+    vCtx.fillText(fmtForceWithG(p.Fg, p.Fg), col1X - 10, (y0 + yFG_end) / 2 + 4);
+
+    // 2) Draw F_Schiene arrow (green, from yFG_end to yFrail_end)
+    if (p.Frail_abs >= 0.5) {
+      drawArrow(vCtx, col2X, yFG_end, col2X, yFrail_end, '#16a34a', 3.5, 11);
+      vCtx.fillStyle = '#16a34a';
+      vCtx.font = 'bold 12px sans-serif';
+      vCtx.textAlign = 'left';
+      const labelY = Math.abs(yFrail_end - yFG_end) < 22 ? yFG_end - 8 : (yFG_end + yFrail_end) / 2 + 4;
+      vCtx.fillText(fmtForceWithG(p.Frail_abs, p.Fg), col2X + 10, labelY);
+    } else {
+      vCtx.fillStyle = '#16a34a';
+      vCtx.beginPath();
+      vCtx.arc(col2X, yFG_end, 4, 0, Math.PI * 2);
+      vCtx.fill();
+      vCtx.font = 'bold 12px sans-serif';
+      vCtx.textAlign = 'center';
+      vCtx.fillText('0 N (0,00 g)', col2X, yFG_end - 10);
+    }
+
+    // 3) Draw right arrow (F_Z,nötig in inertial frame; F_Fug bei Kreisbewegung in comoving frame)
+    if (state.frame === 'inertial') {
+      drawArrow(vCtx, col3X, y0, col3X, yFZ_end, '#dc2626', 3.5, 11);
+      vCtx.fillStyle = '#dc2626';
+      vCtx.font = 'bold 12px sans-serif';
+      vCtx.textAlign = 'left';
+      vCtx.fillText(fmtForceWithG(p.FZ_mag, p.Fg), col3X + 10, (y0 + yFZ_end) / 2 + 4);
+
+      // Show delta bracket when rail is off and forces don't match
+      if (!state.railActive && !p.isWeightlessMatch) {
+        const diff = Math.abs(yFZ_end - yFrail_end);
+        if (diff > 4) {
+          const bx = col3X - 18;
+          vCtx.save();
+          vCtx.strokeStyle = '#d97706';
+          vCtx.lineWidth = 2;
+          vCtx.beginPath();
+          vCtx.moveTo(bx - 4, yFrail_end);
+          vCtx.lineTo(bx + 4, yFrail_end);
+          vCtx.moveTo(bx, yFrail_end);
+          vCtx.lineTo(bx, yFZ_end);
+          vCtx.moveTo(bx - 4, yFZ_end);
+          vCtx.lineTo(bx + 4, yFZ_end);
+          vCtx.stroke();
+
+          vCtx.fillStyle = '#b45309';
+          vCtx.font = 'bold 11px sans-serif';
+          vCtx.textAlign = 'right';
+          const deltaN = Math.round(Math.abs(p.FZ_signed - p.Fg));
+          vCtx.fillText(`ΔF = ${deltaN} N`, bx - 6, (yFrail_end + yFZ_end) / 2 + 4);
+          vCtx.restore();
+        }
+      }
+    } else {
+      const yFFug_start = yFrail_end;
+      const yFFug_end = y0 + relFFug_end;
+      drawArrow(vCtx, col3X, yFFug_start, col3X, yFFug_end, '#7c3aed', 3.5, 11);
+      vCtx.fillStyle = '#7c3aed';
+      vCtx.font = 'bold 12px sans-serif';
+      vCtx.textAlign = 'left';
+      vCtx.fillText(fmtForceWithG(p.FZ_mag, p.Fg), col3X + 10, (yFFug_start + yFFug_end) / 2 + 4);
+    }
+  }
+
+  // Event listeners
+  btnA.addEventListener('click', () => { state.pos = 'A'; updateUI(); });
+  btnB.addEventListener('click', () => { state.pos = 'B'; updateUI(); });
+  btnC.addEventListener('click', () => { state.pos = 'C'; updateUI(); });
+
+  railActiveCb.addEventListener('change', (e) => {
+    state.railActive = e.target.checked;
+    updateUI();
+  });
+
+  presetA.addEventListener('click', () => {
+    state.pos = 'A';
+    const vExact = Math.sqrt(g * state.R);
+    state.v = Math.min(30, Math.max(2, Math.round(vExact * 10) / 10));
+    vSlider.value = state.v;
+    updateUI();
+  });
+
+  presetC.addEventListener('click', () => {
+    state.pos = 'C';
+    const vExact = Math.sqrt(g * state.r);
+    state.v = Math.min(30, Math.max(2, Math.round(vExact * 10) / 10));
+    vSlider.value = state.v;
+    updateUI();
+  });
+
+  vSlider.addEventListener('input', (e) => { state.v = parseFloat(e.target.value); updateUI(); });
+  rSlider.addEventListener('input', (e) => { state.r = parseFloat(e.target.value); updateUI(); });
+  RSlider.addEventListener('input', (e) => { state.R = parseFloat(e.target.value); updateUI(); });
+  mSlider.addEventListener('input', (e) => { state.m = parseFloat(e.target.value); updateUI(); });
+
+  frameInertialBtn.addEventListener('click', () => { state.frame = 'inertial'; updateUI(); });
+  frameComovingBtn.addEventListener('click', () => { state.frame = 'comoving'; updateUI(); });
+
+  // Initial render
+  updateUI();
+</script>
+</body>
+</html>
